@@ -186,9 +186,14 @@ const Workspace = () => {
 
       setStatus("Connecting…");
 
-      const r = await fetch("/api/session", {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const r = await fetch(`${supabaseUrl}/functions/v1/session`, {
         method: "POST",
-        headers: { "Content-Type": "application/sdp" },
+        headers: {
+          "Content-Type": "application/sdp",
+          apikey: supabaseKey,
+        },
         body: offer.sdp,
       });
       if (!r.ok) throw new Error(await r.text());

@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SITE_NAME } from "@/config/site";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import Whiteboard from "@/components/Whiteboard";
 import SpirographCanvas from "@/components/SpirographCanvas";
@@ -12,7 +11,6 @@ const Workspace = () => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Audio/realtime state
   const [status, setStatus] = useState("Ready to start");
   const [subtitles, setSubtitles] = useState("");
   const [started, setStarted] = useState(false);
@@ -28,10 +26,21 @@ const Workspace = () => {
     if (dc && dc.readyState === "open") dc.send(JSON.stringify(evt));
   }
 
-  function getLatestDrawingDataUrl() {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    return canvas.toDataURL("image/jpeg", 0.85);
+  /** Send the reviewed transcript as a text-only user message */
+  function sendTranscript() {
+    const text = userTranscript.trim();
+    if (!text) return;
+
+    sendEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    });
+    sendEvent({ type: "response.create" });
+    setUserTranscript("");
   }
 
   async function start() {
@@ -60,17 +69,8 @@ const Workspace = () => {
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
+      // Accumulate transcript segments for the current turn
       let turnTranscript = "";
-      let transcriptItemId: string | null = null;
-
-      function showTranscriptForReview() {
-        const text = (turnTranscript || "").trim();
-        if (text) {
-          setUserTranscript(text);
-        }
-        turnTranscript = "";
-        transcriptItemId = null;
-      }
 
       dc.onopen = () => {
         setStarted(true);
@@ -79,68 +79,67 @@ const Workspace = () => {
         sendEvent({
           type: "session.update",
           session: {
-            type: "realtime",
-            model: "gpt-realtime",
-            output_modalities: ["audio"],
-            audio: {
-              input: {
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.55,
-                  prefix_padding_ms: 250,
-                  silence_duration_ms: 1500,
-                  create_response: false,
-                  interrupt_response: true,
-                },
-              },
-              output: { voice: "marin" },
-            },
+            modalities: ["text", "audio"],
             instructions: [
-              "You are a cordial, helpful real-time TA.",
-              "If the user message includes a sketch image, use it to guide the explanation.",
+              "You are a cordial, helpful real-time math TA.",
               "If not math-related, respond normally.",
               "Keep responses clear and not too long.",
             ].join("\n"),
+            voice: "ash",
+            input_audio_transcription: { model: "whisper-1" },
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.55,
+              prefix_padding_ms: 250,
+              silence_duration_ms: 1500,
+              create_response: false,
+            },
           },
         });
       };
 
       dc.onmessage = (e) => {
         let evt: Record<string, unknown>;
-        try { evt = JSON.parse(e.data); } catch { return; }
+        try {
+          evt = JSON.parse(e.data);
+        } catch {
+          return;
+        }
 
+        // User started speaking — reset transcript
         if (evt.type === "input_audio_buffer.speech_started") {
           turnTranscript = "";
-          transcriptItemId = null;
           return;
         }
 
+        // Partial transcript delta — APPEND (was incorrectly replacing before)
         if (evt.type === "conversation.item.input_audio_transcription.delta") {
-          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
-          if (evt.item_id === transcriptItemId) {
-            turnTranscript = (evt.delta as string) || "";
-          }
+          turnTranscript += (evt.delta as string) || "";
           return;
         }
 
+        // Final transcript for the turn
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
-          if (evt.item_id === transcriptItemId) {
-            turnTranscript = (evt.transcript as string) || turnTranscript || "";
-          }
+          turnTranscript = (evt.transcript as string) || turnTranscript || "";
           return;
         }
 
+        // User stopped speaking — show transcript for review
         if (evt.type === "input_audio_buffer.speech_stopped") {
-          setTimeout(showTranscriptForReview, 250);
+          setTimeout(() => {
+            const text = turnTranscript.trim();
+            if (text) setUserTranscript(text);
+            turnTranscript = "";
+          }, 300);
           return;
         }
 
-        if (evt.type === "response.output_text.delta" && evt.delta) {
+        // Assistant audio transcript deltas (subtitles)
+        if (evt.type === "response.audio_transcript.delta" && evt.delta) {
           setSubtitles((prev) => prev + (evt.delta as string));
           return;
         }
-        if (evt.type === "response.output_text.done") {
+        if (evt.type === "response.audio_transcript.done") {
           setTimeout(() => setSubtitles(""), 3000);
           return;
         }
@@ -156,7 +155,7 @@ const Workspace = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/sdp",
-          "apikey": supabaseKey,
+          apikey: supabaseKey,
         },
         body: offer.sdp,
       });
@@ -168,23 +167,6 @@ const Workspace = () => {
     } catch (err) {
       setStatus(`Error: ${err instanceof Error ? err.message : "Unknown"}`);
     }
-  }
-
-  function sendTranscript() {
-    const text = userTranscript.trim();
-    const img = getLatestDrawingDataUrl();
-    if (!text && !img) return;
-
-    const content: Record<string, unknown>[] = [];
-    if (text) content.push({ type: "input_text", text });
-    if (img) content.push({ type: "input_image", image_url: img });
-
-    sendEvent({
-      type: "conversation.item.create",
-      item: { type: "message", role: "user", content },
-    });
-    sendEvent({ type: "response.create" });
-    setUserTranscript("");
   }
 
   function toggleMute() {
@@ -200,7 +182,9 @@ const Workspace = () => {
     try {
       sendEvent({ type: "response.cancel" });
       sendEvent({ type: "output_audio_buffer.clear" });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     dcRef.current?.close();
     pcRef.current?.close();
@@ -213,13 +197,17 @@ const Workspace = () => {
     setStarted(false);
     setMuted(false);
     setSubtitles("");
+    setUserTranscript("");
     setStatus("Session ended");
   }
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      try { stop(); } catch { /* ignore */ }
+      try {
+        stop();
+      } catch {
+        /* ignore */
+      }
     };
   }, []);
 
@@ -232,7 +220,6 @@ const Workspace = () => {
         </Button>
         <h1 className="font-display text-lg font-semibold">{SITE_NAME}</h1>
 
-        {/* Audio controls */}
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
 
@@ -275,12 +262,10 @@ const Workspace = () => {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
-            {/* Spirograph as TA visual */}
             <div className="w-64 h-64 opacity-60">
               <SpirographCanvas animate={started} size={256} />
             </div>
 
-            {/* Subtitles overlay */}
             {subtitles && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -299,7 +284,7 @@ const Workspace = () => {
           </div>
         </div>
 
-        {/* Right: Whiteboard */}
+        {/* Right: Whiteboard + Transcript */}
         <div className="w-1/2 flex flex-col">
           <div className="px-4 py-2 border-b border-border bg-card/30">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
@@ -310,7 +295,7 @@ const Workspace = () => {
             <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
 
-          {/* Transcript preview */}
+          {/* Transcript preview — appears after user stops speaking */}
           {userTranscript && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -329,11 +314,7 @@ const Workspace = () => {
                 >
                   <X className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={sendTranscript}
-                >
+                <Button size="icon" className="h-7 w-7" onClick={sendTranscript}>
                   <Send className="h-3.5 w-3.5" />
                 </Button>
               </div>

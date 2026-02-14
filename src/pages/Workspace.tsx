@@ -34,31 +34,22 @@ const Workspace = () => {
     if (dc && dc.readyState === "open") dc.send(JSON.stringify(evt));
   }
 
-  function getLatestDrawingDataUrl() {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    return canvas.toDataURL("image/jpeg", 0.85);
-  }
-
   function finalizeAndSendTurn(text: string) {
-    const img = getLatestDrawingDataUrl();
-
     if (text) {
       appendLog("YOU: " + text);
       setUserTranscript(text);
-      // Clear after a few seconds
       setTimeout(() => setUserTranscript(""), 4000);
     }
 
-    if (!text && !img) return;
-
-    const content: Record<string, unknown>[] = [];
-    if (text) content.push({ type: "input_text", text });
-    if (img) content.push({ type: "input_image", image_url: img });
+    if (!text) return;
 
     sendEvent({
       type: "conversation.item.create",
-      item: { type: "message", role: "user", content },
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
     });
     sendEvent({ type: "response.create" });
   }

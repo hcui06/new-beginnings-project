@@ -9,10 +9,11 @@ import { motion } from "framer-motion";
 
 const Workspace = () => {
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // ===== realtime state =====
   const [status, setStatus] = useState("Ready to start");
   const [subtitles, setSubtitles] = useState("");
+  const [log, setLog] = useState("");
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(false);
   const [userTranscript, setUserTranscript] = useState("");
@@ -21,23 +22,38 @@ const Workspace = () => {
   const dcRef = useRef<RTCDataChannel | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
 
+  // ===== whiteboard =====
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  function appendLog(s: string) {
+    setLog((prev) => prev + s + "\n");
+  }
+
   function sendEvent(evt: Record<string, unknown>) {
     const dc = dcRef.current;
     if (dc && dc.readyState === "open") dc.send(JSON.stringify(evt));
   }
 
-  /** Send the reviewed transcript as a text-only user message */
+  function getLatestDrawingDataUrl() {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }
+
   function sendTranscript() {
     const text = userTranscript.trim();
-    if (!text) return;
+    const img = getLatestDrawingDataUrl();
+    if (!text && !img) return;
+
+    appendLog("YOU: " + text);
+
+    const content: Record<string, unknown>[] = [];
+    if (text) content.push({ type: "input_text", text });
+    if (img) content.push({ type: "input_image", image_url: img });
 
     sendEvent({
       type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text }],
-      },
+      item: { type: "message", role: "user", content },
     });
     sendEvent({ type: "response.create" });
     setUserTranscript("");
@@ -48,7 +64,11 @@ const Workspace = () => {
 
     try {
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       micStreamRef.current = micStream;
 
@@ -69,8 +89,9 @@ const Workspace = () => {
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
-      // Accumulate transcript segments for the current turn
+      let turnActive = false;
       let turnTranscript = "";
+      let transcriptItemId: string | null = null;
 
       dc.onopen = () => {
         setStarted(true);
@@ -79,20 +100,22 @@ const Workspace = () => {
         sendEvent({
           type: "session.update",
           session: {
-            modalities: ["text", "audio"],
-            instructions: [
-              "You are a cordial, helpful real-time math TA.",
-              "If not math-related, respond normally.",
-              "Keep responses clear and not too long.",
-            ].join("\n"),
-            voice: "ash",
-            input_audio_transcription: { model: "whisper-1" },
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.55,
-              prefix_padding_ms: 250,
-              silence_duration_ms: 1500,
-              create_response: false,
+            type: "realtime",
+            model: "gpt-realtime",
+            input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
+            output_modalities: ["audio"],
+            audio: {
+              input: {
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.55,
+                  prefix_padding_ms: 250,
+                  silence_duration_ms: 1500,
+                  create_response: false,
+                  interrupt_response: true,
+                },
+              },
+              output: { voice: "marin" },
             },
           },
         });
@@ -106,42 +129,55 @@ const Workspace = () => {
           return;
         }
 
-        // User started speaking — reset transcript
         if (evt.type === "input_audio_buffer.speech_started") {
+          turnActive = true;
           turnTranscript = "";
+          transcriptItemId = null;
+          appendLog("speech_started");
           return;
         }
 
-        // Partial transcript delta — APPEND (was incorrectly replacing before)
         if (evt.type === "conversation.item.input_audio_transcription.delta") {
-          turnTranscript += (evt.delta as string) || "";
+          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
+          if (turnActive && evt.item_id === transcriptItemId) {
+            turnTranscript += (evt.delta as string) || "";
+          }
           return;
         }
 
-        // Final transcript for the turn
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          turnTranscript = (evt.transcript as string) || turnTranscript || "";
+          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
+          if (evt.item_id === transcriptItemId) {
+            turnTranscript = (evt.transcript as string) || turnTranscript || "";
+          }
           return;
         }
 
-        // User stopped speaking — show transcript for review
         if (evt.type === "input_audio_buffer.speech_stopped") {
+          turnActive = false;
+          appendLog("speech_stopped");
+          // Show transcript for review instead of auto-sending
           setTimeout(() => {
-            const text = turnTranscript.trim();
+            const text = (turnTranscript || "").trim();
             if (text) setUserTranscript(text);
             turnTranscript = "";
-          }, 300);
+            transcriptItemId = null;
+          }, 250);
           return;
         }
 
-        // Assistant audio transcript deltas (subtitles)
-        if (evt.type === "response.audio_transcript.delta" && evt.delta) {
+        if (evt.type === "response.output_text.delta" && evt.delta) {
           setSubtitles((prev) => prev + (evt.delta as string));
           return;
         }
-        if (evt.type === "response.audio_transcript.done") {
-          setTimeout(() => setSubtitles(""), 3000);
+
+        if (evt.type === "response.output_text.done") {
+          setTimeout(() => setSubtitles(""), 1200);
           return;
+        }
+
+        if (evt.type === "error") {
+          appendLog("ERROR: " + ((evt.error as any)?.message || JSON.stringify(evt)));
         }
       };
 
@@ -149,14 +185,10 @@ const Workspace = () => {
       await pc.setLocalDescription(offer);
 
       setStatus("Connecting…");
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const r = await fetch(`${supabaseUrl}/functions/v1/session`, {
+
+      const r = await fetch("/api/session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/sdp",
-          apikey: supabaseKey,
-        },
+        headers: { "Content-Type": "application/sdp" },
         body: offer.sdp,
       });
       if (!r.ok) throw new Error(await r.text());
@@ -179,13 +211,6 @@ const Workspace = () => {
   }
 
   function stop() {
-    try {
-      sendEvent({ type: "response.cancel" });
-      sendEvent({ type: "output_audio_buffer.clear" });
-    } catch {
-      /* ignore */
-    }
-
     dcRef.current?.close();
     pcRef.current?.close();
     micStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -203,11 +228,7 @@ const Workspace = () => {
 
   useEffect(() => {
     return () => {
-      try {
-        stop();
-      } catch {
-        /* ignore */
-      }
+      try { stop(); } catch { /* ignore */ }
     };
   }, []);
 
@@ -282,6 +303,13 @@ const Workspace = () => {
               </p>
             )}
           </div>
+
+          {/* Log panel */}
+          {log && (
+            <div className="border-t border-border bg-muted/30 px-4 py-2 max-h-40 overflow-auto">
+              <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">{log}</pre>
+            </div>
+          )}
         </div>
 
         {/* Right: Whiteboard + Transcript */}

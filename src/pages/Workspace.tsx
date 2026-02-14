@@ -4,7 +4,7 @@ import { SITE_NAME } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import Whiteboard from "@/components/Whiteboard";
 import SpirographCanvas from "@/components/SpirographCanvas";
-import { ArrowLeft, Mic, MicOff, Phone, PhoneOff, Send, X } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Phone, PhoneOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Workspace = () => {
@@ -40,12 +40,17 @@ const Workspace = () => {
     return canvas.toDataURL("image/jpeg", 0.85);
   }
 
-  function sendTranscript() {
-    const text = userTranscript.trim();
+  function finalizeAndSendTurn(text: string) {
     const img = getLatestDrawingDataUrl();
-    if (!text && !img) return;
 
-    appendLog("YOU: " + text);
+    if (text) {
+      appendLog("YOU: " + text);
+      setUserTranscript(text);
+      // Clear after a few seconds
+      setTimeout(() => setUserTranscript(""), 4000);
+    }
+
+    if (!text && !img) return;
 
     const content: Record<string, unknown>[] = [];
     if (text) content.push({ type: "input_text", text });
@@ -56,7 +61,6 @@ const Workspace = () => {
       item: { type: "message", role: "user", content },
     });
     sendEvent({ type: "response.create" });
-    setUserTranscript("");
   }
 
   async function start() {
@@ -156,10 +160,9 @@ const Workspace = () => {
         if (evt.type === "input_audio_buffer.speech_stopped") {
           turnActive = false;
           appendLog("speech_stopped");
-          // Show transcript for review instead of auto-sending
           setTimeout(() => {
             const text = (turnTranscript || "").trim();
-            if (text) setUserTranscript(text);
+            finalizeAndSendTurn(text);
             turnTranscript = "";
             transcriptItemId = null;
           }, 250);
@@ -328,29 +331,17 @@ const Workspace = () => {
             <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
 
-          {/* Transcript preview — appears after user stops speaking */}
+          {/* Transcript display — shows what user said */}
           {userTranscript && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="border-t border-border bg-card/50 px-4 py-3 flex items-start gap-3"
+              exit={{ opacity: 0 }}
+              className="border-t border-border bg-card/50 px-4 py-3"
             >
-              <p className="flex-1 text-sm leading-relaxed font-mono text-foreground">
-                {userTranscript}
+              <p className="text-sm leading-relaxed font-mono text-muted-foreground">
+                You: {userTranscript}
               </p>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={() => setUserTranscript("")}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="icon" className="h-7 w-7" onClick={sendTranscript}>
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
-              </div>
             </motion.div>
           )}
         </div>

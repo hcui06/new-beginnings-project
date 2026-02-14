@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import Whiteboard from "@/components/Whiteboard";
 import SpirographCanvas from "@/components/SpirographCanvas";
-import { ArrowLeft, Mic, MicOff, Phone, PhoneOff } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Phone, PhoneOff, Send, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Workspace = () => {
@@ -17,6 +17,7 @@ const Workspace = () => {
   const [subtitles, setSubtitles] = useState("");
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [userTranscript, setUserTranscript] = useState("");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -62,21 +63,11 @@ const Workspace = () => {
       let turnTranscript = "";
       let transcriptItemId: string | null = null;
 
-      function finalizeAndSendTurn() {
+      function showTranscriptForReview() {
         const text = (turnTranscript || "").trim();
-        const img = getLatestDrawingDataUrl();
-        if (!text && !img) return;
-
-        const content: Record<string, unknown>[] = [];
-        if (text) content.push({ type: "input_text", text });
-        if (img) content.push({ type: "input_image", image_url: img });
-
-        sendEvent({
-          type: "conversation.item.create",
-          item: { type: "message", role: "user", content },
-        });
-        sendEvent({ type: "response.create" });
-
+        if (text) {
+          setUserTranscript(text);
+        }
         turnTranscript = "";
         transcriptItemId = null;
       }
@@ -141,7 +132,7 @@ const Workspace = () => {
         }
 
         if (evt.type === "input_audio_buffer.speech_stopped") {
-          setTimeout(finalizeAndSendTurn, 250);
+          setTimeout(showTranscriptForReview, 250);
           return;
         }
 
@@ -177,6 +168,23 @@ const Workspace = () => {
     } catch (err) {
       setStatus(`Error: ${err instanceof Error ? err.message : "Unknown"}`);
     }
+  }
+
+  function sendTranscript() {
+    const text = userTranscript.trim();
+    const img = getLatestDrawingDataUrl();
+    if (!text && !img) return;
+
+    const content: Record<string, unknown>[] = [];
+    if (text) content.push({ type: "input_text", text });
+    if (img) content.push({ type: "input_image", image_url: img });
+
+    sendEvent({
+      type: "conversation.item.create",
+      item: { type: "message", role: "user", content },
+    });
+    sendEvent({ type: "response.create" });
+    setUserTranscript("");
   }
 
   function toggleMute() {
@@ -301,6 +309,36 @@ const Workspace = () => {
           <div className="flex-1 min-h-0">
             <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
+
+          {/* Transcript preview */}
+          {userTranscript && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border-t border-border bg-card/50 px-4 py-3 flex items-start gap-3"
+            >
+              <p className="flex-1 text-sm leading-relaxed font-mono text-foreground">
+                {userTranscript}
+              </p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setUserTranscript("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={sendTranscript}
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

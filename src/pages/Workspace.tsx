@@ -97,7 +97,7 @@ const Workspace = () => {
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.55,
+              threshold: 0.65,
               prefix_padding_ms: 250,
               silence_duration_ms: 1500,
               create_response: false,
@@ -209,7 +209,11 @@ const Workspace = () => {
 
   useEffect(() => {
     return () => {
-      try { stop(); } catch { /* ignore */ }
+      try {
+        stop();
+      } catch {
+        /* ignore */
+      }
     };
   }, []);
 
@@ -232,20 +236,10 @@ const Workspace = () => {
             </Button>
           ) : (
             <>
-              <Button
-                size="icon"
-                variant={muted ? "destructive" : "outline"}
-                className="h-8 w-8"
-                onClick={toggleMute}
-              >
+              <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
                 {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
-              <Button
-                size="icon"
-                variant="destructive"
-                className="h-8 w-8"
-                onClick={stop}
-              >
+              <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
                 <PhoneOff className="h-4 w-4" />
               </Button>
             </>
@@ -258,9 +252,7 @@ const Workspace = () => {
         {/* Left: Virtual TA panel */}
         <div className="w-1/2 border-r border-border flex flex-col">
           <div className="px-4 py-2 border-b border-border bg-card/30">
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              Virtual TA
-            </span>
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Virtual TA</span>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
@@ -280,7 +272,8 @@ const Workspace = () => {
 
             {!started && !subtitles && (
               <p className="mt-6 text-sm text-muted-foreground text-center max-w-xs">
-                Start the session to connect with your AI teaching assistant. Speak naturally and draw on the whiteboard.
+                Start the session to connect with your AI teaching assistant. Speak naturally and draw on the
+                whiteboard.
               </p>
             )}
           </div>
@@ -296,9 +289,7 @@ const Workspace = () => {
         {/* Right: Whiteboard + Transcript */}
         <div className="w-1/2 flex flex-col">
           <div className="px-4 py-2 border-b border-border bg-card/30">
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              Whiteboard
-            </span>
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Whiteboard</span>
           </div>
           <div className="flex-1 min-h-0">
             <Whiteboard canvasRef={canvasRef} className="h-full" />
@@ -312,9 +303,7 @@ const Workspace = () => {
               exit={{ opacity: 0 }}
               className="border-t border-border bg-card/50 px-4 py-3"
             >
-              <p className="text-sm leading-relaxed font-mono text-muted-foreground">
-                You: {userTranscript}
-              </p>
+              <p className="text-sm leading-relaxed font-mono text-muted-foreground">You: {userTranscript}</p>
             </motion.div>
           )}
         </div>

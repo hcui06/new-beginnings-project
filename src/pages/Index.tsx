@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION } from "@/config/site";
 import MathSymbols from "@/components/MathSymbols";
-import LovelaceToroid from "@/components/LovelaceToroid";
+import SpirographCanvas from "@/components/SpirographCanvas";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -72,7 +72,7 @@ const Index = () => {
                 ease: [0.16, 1, 0.3, 1],
               }}
             >
-              <LovelaceToroid animate size={500} />
+              <SpirographCanvas animate size={500} />
             </motion.div>
 
             <motion.p

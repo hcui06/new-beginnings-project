@@ -80,12 +80,12 @@ const Index = () => {
               }}
             >
               <motion.div
-                animate={{ scale: [1, 1.06, 1, 1.04, 1] }}
+                animate={{ scale: [1, 1.06, 1, 1.04, 1, 1, 1] }}
                 transition={{
-                  duration: 1.8,
+                  duration: 1.6,
                   ease: "easeInOut",
-                  repeat: Infinity,
-                  repeatDelay: 0.2,
+                  times: [0, 0.15, 0.35, 0.5, 0.65, 0.7, 1],
+                  repeat: 0,
                 }}
               >
                 <SpirographCanvas animate size={500} />

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Pencil, Eraser, Trash2 } from "lucide-react";
+import { Pencil, Eraser, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface WhiteboardProps {
@@ -19,6 +19,7 @@ const Whiteboard = ({ canvasRef, className = "" }: WhiteboardProps) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState(COLORS[0].value);
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
+  const historyRef = useRef<ImageData[]>([]);
 
   const fillCanvasWhite = useCallback(() => {
     const canvas = canvasRef.current;
@@ -54,10 +55,29 @@ const Whiteboard = ({ canvasRef, className = "" }: WhiteboardProps) => {
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
+  const saveSnapshot = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    historyRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    if (historyRef.current.length > 50) historyRef.current.shift();
+  }, [canvasRef]);
+
+  const undo = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx || historyRef.current.length === 0) return;
+    const prev = historyRef.current.pop()!;
+    ctx.putImageData(prev, 0, 0);
+  }, [canvasRef]);
+
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
+    saveSnapshot();
     const { x, y } = getCoords(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -87,6 +107,7 @@ const Whiteboard = ({ canvasRef, className = "" }: WhiteboardProps) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx || !canvas) return;
+    saveSnapshot();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     fillCanvasWhite();
   };
@@ -129,6 +150,15 @@ const Whiteboard = ({ canvasRef, className = "" }: WhiteboardProps) => {
           onClick={() => setTool("eraser")}
         >
           <Eraser className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={undo}
+        >
+          <Undo2 className="h-4 w-4" />
         </Button>
 
         <div className="w-px h-5 bg-border" />

@@ -34,24 +34,11 @@ const Workspace = () => {
     if (dc && dc.readyState === "open") dc.send(JSON.stringify(evt));
   }
 
-  function finalizeAndSendTurn(text: string) {
-    if (text) {
-      appendLog("YOU: " + text);
-      setUserTranscript(text);
-      setTimeout(() => setUserTranscript(""), 4000);
-    }
-
+  function showUserTranscript(text: string) {
     if (!text) return;
-
-    sendEvent({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text }],
-      },
-    });
-    sendEvent({ type: "response.create" });
+    appendLog("YOU: " + text);
+    setUserTranscript(text);
+    setTimeout(() => setUserTranscript(""), 4000);
   }
 
   async function start() {
@@ -97,10 +84,10 @@ const Workspace = () => {
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.65,
-              prefix_padding_ms: 400,
-              silence_duration_ms: 1000,
-              create_response: false,
+              threshold: 0.3,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500,
+              create_response: true,
               interrupt_response: true,
             },
             voice: "ash",
@@ -127,10 +114,8 @@ const Workspace = () => {
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          // This fires when the server finishes transcribing the turn
           const finalText = ((evt.transcript as string) || turnTranscript || "").trim();
-          appendLog("transcription_completed: " + finalText);
-          finalizeAndSendTurn(finalText);
+          showUserTranscript(finalText);
           turnTranscript = "";
           return;
         }

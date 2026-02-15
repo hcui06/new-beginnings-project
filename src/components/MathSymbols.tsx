@@ -1,4 +1,7 @@
-const symbols = ["∫", "∑", "π", "∞", "√", "Δ", "∂", "∇", "∈", "∀", "λ", "θ"];
+const symbols = [
+  "∫", "∑", "π", "∞", "√", "Δ", "∂", "∇", "∈", "∀", "λ", "θ",
+  "♥", "±", "≈", "♥", "∮", "ℝ", "♥", "⊂", "∝", "♥", "ε", "φ",
+];
 
 const MathSymbols = () => {
   return (
@@ -6,13 +9,13 @@ const MathSymbols = () => {
       {symbols.map((s, i) => (
         <span
           key={i}
-          className="absolute font-mono text-primary/[0.07] animate-float"
+          className={`absolute font-mono animate-float ${s === "♥" ? "text-primary/[0.10]" : "text-primary/[0.07]"}`}
           style={{
-            fontSize: `${1.5 + Math.random() * 3}rem`,
-            left: `${5 + (i / symbols.length) * 85}%`,
-            top: `${10 + Math.random() * 75}%`,
-            animationDelay: `${i * 0.5}s`,
-            animationDuration: `${5 + Math.random() * 4}s`,
+            fontSize: `${1.2 + ((i * 7) % 5) * 0.6}rem`,
+            left: `${3 + ((i * 37) % 90)}%`,
+            top: `${5 + ((i * 53) % 85)}%`,
+            animationDelay: `${(i * 0.7) % 6}s`,
+            animationDuration: `${5 + ((i * 3) % 5)}s`,
           }}
         >
           {s}

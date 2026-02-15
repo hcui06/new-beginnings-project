@@ -67,8 +67,8 @@ const Index = () => {
             <motion.div
               initial={{ scale: 0, rotate: -180, opacity: 0 }}
               animate={{
-                scale: [0, 1, 1.06, 1, 1.04, 1],
-                rotate: [-180, 0, 0, 0, 0, 0],
+                scale: [0, 1, 1.05, 1],
+                rotate: [-180, 0, 0, 0],
                 opacity: 1,
               }}
               transition={{
@@ -77,9 +77,7 @@ const Index = () => {
                 scale: {
                   duration: 1.5,
                   ease: [0.16, 1, 0.3, 1],
-                  times: [0, 0.5, 0.6, 0.7, 0.8, 1],
-                  repeat: Infinity,
-                  repeatDelay: 0.3,
+                  times: [0, 0.5, 0.7, 1],
                 },
               }}
               style={{

@@ -50,6 +50,7 @@ const Workspace = () => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          channelCount: 1,
         },
       });
       micStreamRef.current = micStream;

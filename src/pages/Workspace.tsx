@@ -183,11 +183,8 @@ const Workspace = () => {
     return canvas.toDataURL("image/jpeg", 0.85);
   }
 
-  async function toggleTalking() {
+  function toggleTalking() {
     if (!talking) {
-      if (!started) {
-        await start();
-      }
       setTalking(true);
       setStatus("Listening…");
       turnTranscriptRef.current = "";
@@ -237,6 +234,7 @@ const Workspace = () => {
   }
 
   useEffect(() => {
+    start();
     return () => {
       try {
         stop();

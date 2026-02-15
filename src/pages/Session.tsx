@@ -95,22 +95,33 @@ const Session = () => {
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
-            className={`group relative mx-auto flex h-52 w-52 cursor-pointer flex-col items-center justify-center rounded-full border-2 border-dashed transition-all duration-300 ${
-              dragging
-                ? "border-primary bg-primary/10 scale-105"
-                : "border-border hover:border-primary/50 hover:bg-primary/5"
-            }`}
+            className="group relative mx-auto flex h-56 w-56 cursor-pointer items-center justify-center"
           >
-            <span
-              className={`text-7xl font-bold leading-none transition-colors duration-200 ${
-                dragging ? "text-primary" : "text-primary/40 group-hover:text-primary/70"
+            {/* Bubble background */}
+            <div
+              className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                dragging
+                  ? "bg-primary/15 shadow-[0_0_40px_hsl(var(--primary)/0.3)] scale-105"
+                  : "bg-primary/[0.06] group-hover:bg-primary/10 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
               }`}
-            >
-              Σ
-            </span>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Drop files here
-            </p>
+            />
+            <div
+              className={`absolute inset-2 rounded-full border-2 border-dashed transition-all duration-300 ${
+                dragging ? "border-primary/50" : "border-primary/15 group-hover:border-primary/30"
+              }`}
+            />
+            <div className="relative flex flex-col items-center">
+              <span
+                className={`text-[7rem] font-bold leading-none transition-colors duration-200 ${
+                  dragging ? "text-primary" : "text-primary/30 group-hover:text-primary/60"
+                }`}
+              >
+                Σ
+              </span>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Drop files here
+              </p>
+            </div>
           </div>
 
           <input

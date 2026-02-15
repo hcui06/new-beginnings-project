@@ -167,18 +167,18 @@ const Workspace = () => {
     setStatus(next ? "Muted" : "Ready — press Talk");
   }
 
-  function startTalking() {
-    setTalking(true);
-    setStatus("Listening…");
-    turnTranscriptRef.current = "";
-    sendEvent({ type: "input_audio_buffer.clear" });
-  }
-
-  function stopTalking() {
-    setTalking(false);
-    setStatus("Processing…");
-    sendEvent({ type: "input_audio_buffer.commit" });
-    sendEvent({ type: "response.create" });
+  function toggleTalking() {
+    if (!talking) {
+      setTalking(true);
+      setStatus("Listening…");
+      turnTranscriptRef.current = "";
+      sendEvent({ type: "input_audio_buffer.clear" });
+    } else {
+      setTalking(false);
+      setStatus("Processing…");
+      sendEvent({ type: "input_audio_buffer.commit" });
+      sendEvent({ type: "response.create" });
+    }
   }
 
   function stop() {
@@ -230,14 +230,11 @@ const Workspace = () => {
                 size="sm"
                 variant={talking ? "destructive" : "default"}
                 className="gap-2"
-                onMouseDown={startTalking}
-                onMouseUp={stopTalking}
-                onTouchStart={startTalking}
-                onTouchEnd={stopTalking}
+                onClick={toggleTalking}
                 disabled={muted}
               >
                 {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                {talking ? "Release to Send" : "Hold to Talk"}
+                {talking ? "Stop" : "Talk"}
               </Button>
               <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
                 {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}

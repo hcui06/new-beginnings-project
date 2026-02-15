@@ -336,7 +336,7 @@ const Workspace = () => {
                 )}
               </>
             ) : (
-              <div className="flex w-full gap-2 items-end">
+              <div className="flex w-full gap-2 items-center">
                 <Textarea
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}

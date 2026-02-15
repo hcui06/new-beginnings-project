@@ -44,7 +44,7 @@ const SpirographCanvas = ({ className = "", animate = true, size = 600 }: Spirog
       const elapsed = (timestamp - startTimeRef.current) / 1000;
       ctx.clearRect(0, 0, w, h);
 
-      const baseScale = Math.min(w, h) * 0.012;
+      const baseScale = Math.min(w, h) * 0.022;
 
       for (let r = 0; r < ringCount; r++) {
         const frac = (r + 1) / ringCount;

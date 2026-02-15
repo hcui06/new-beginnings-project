@@ -277,11 +277,6 @@ const Workspace = () => {
               </motion.div>
             )}
 
-            {!started && !subtitles && (
-              <p className="mt-6 text-sm text-muted-foreground text-center max-w-xs">
-                Start the session, then hold the Talk button to speak. Release to send your message.
-              </p>
-            )}
           </div>
 
           {/* Log panel */}

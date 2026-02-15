@@ -22,6 +22,7 @@ const Workspace = () => {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
+  const turnTranscriptRef = useRef("");
 
   // ===== whiteboard =====
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,8 +72,7 @@ const Workspace = () => {
 
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
-
-      let turnTranscript = "";
+      // turnTranscript now uses ref
 
       dc.onopen = () => {
         setStarted(true);
@@ -82,6 +82,7 @@ const Workspace = () => {
           type: "session.update",
           session: {
             input_audio_transcription: { model: "whisper-1" },
+            modalities: ["text", "audio"],
             turn_detection: null,
             voice: "ash",
           },
@@ -96,24 +97,18 @@ const Workspace = () => {
           return;
         }
 
-        if (evt.type === "input_audio_buffer.speech_started") {
-          return;
-        }
+        // Debug: log all event types
+        appendLog("EVT: " + (evt.type as string));
 
         if (evt.type === "conversation.item.input_audio_transcription.delta") {
-          turnTranscript += (evt.delta as string) || "";
+          turnTranscriptRef.current += (evt.delta as string) || "";
           return;
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          const finalText = ((evt.transcript as string) || turnTranscript || "").trim();
+          const finalText = ((evt.transcript as string) || turnTranscriptRef.current || "").trim();
           showUserTranscript(finalText);
-          turnTranscript = "";
-          return;
-        }
-
-        if (evt.type === "input_audio_buffer.speech_stopped") {
-          // Don't finalize here — wait for transcription.completed
+          turnTranscriptRef.current = "";
           return;
         }
 
@@ -123,12 +118,13 @@ const Workspace = () => {
         }
 
         if (evt.type === "response.audio_transcript.done") {
+          setStatus("Connected — press Talk");
           setTimeout(() => setSubtitles(""), 1200);
           return;
         }
 
         if (evt.type === "error") {
-          appendLog("ERROR: " + ((evt.error as any)?.message || JSON.stringify(evt)));
+          appendLog("ERROR: " + JSON.stringify(evt));
         }
       };
 
@@ -169,6 +165,7 @@ const Workspace = () => {
   function startTalking() {
     setTalking(true);
     setStatus("Listening…");
+    turnTranscriptRef.current = "";
     sendEvent({ type: "input_audio_buffer.clear" });
   }
 

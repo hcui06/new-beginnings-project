@@ -84,9 +84,7 @@ const Workspace = () => {
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
-      let turnActive = false;
       let turnTranscript = "";
-      let transcriptItemId: string | null = null;
 
       dc.onopen = () => {
         setStarted(true);
@@ -119,37 +117,27 @@ const Workspace = () => {
         }
 
         if (evt.type === "input_audio_buffer.speech_started") {
-          turnActive = true;
           turnTranscript = "";
-          transcriptItemId = null;
           appendLog("speech_started");
           return;
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.delta") {
-          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
-          if (turnActive && evt.item_id === transcriptItemId) {
-            turnTranscript += (evt.delta as string) || "";
-          }
+          turnTranscript += (evt.delta as string) || "";
           return;
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          if (!transcriptItemId) transcriptItemId = evt.item_id as string;
-          if (evt.item_id === transcriptItemId) {
-            turnTranscript = (evt.transcript as string) || turnTranscript || "";
-          }
+          turnTranscript = (evt.transcript as string) || turnTranscript || "";
           return;
         }
 
         if (evt.type === "input_audio_buffer.speech_stopped") {
-          turnActive = false;
           appendLog("speech_stopped");
           setTimeout(() => {
             const text = (turnTranscript || "").trim();
             finalizeAndSendTurn(text);
             turnTranscript = "";
-            transcriptItemId = null;
           }, 250);
           return;
         }

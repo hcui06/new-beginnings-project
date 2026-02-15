@@ -280,8 +280,15 @@ const Workspace = () => {
 
         {/* Right: Whiteboard + Audio Controls */}
         <div className="w-1/2 flex flex-col">
+          <div className="px-4 py-2 border-b border-border bg-card/30">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Whiteboard</span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <Whiteboard canvasRef={canvasRef} className="h-full" />
+          </div>
+
           {/* Audio controls */}
-          <div className="border-b border-border bg-card/30 px-4 py-4 flex items-center justify-center gap-3">
+          <div className="border-t border-border bg-card/30 px-4 py-4 flex items-center justify-center gap-3">
             <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
 
             {!started ? (
@@ -308,13 +315,6 @@ const Workspace = () => {
                 </Button>
               </>
             )}
-          </div>
-
-          <div className="px-4 py-2 border-b border-border bg-card/30">
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Whiteboard</span>
-          </div>
-          <div className="flex-1 min-h-0">
-            <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
         </div>
       </div>

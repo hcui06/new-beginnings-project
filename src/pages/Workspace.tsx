@@ -341,7 +341,7 @@ const Workspace = () => {
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
                   placeholder="Type your message…"
-                  className="min-h-[48px] max-h-[80px] resize-none flex-1"
+                  className="min-h-[48px] max-h-[80px] resize-none flex-1 bg-white dark:bg-muted text-foreground overflow-y-auto break-words"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();

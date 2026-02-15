@@ -188,14 +188,14 @@ const LovelaceToroid = ({
 
         ctx.beginPath();
         ctx.arc(p.sx, p.sy, rDot, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(15, 90%, ${lightness}%, ${alpha})`;
+        ctx.fillStyle = `hsla(280, 30%, ${lightness}%, ${alpha})`;
         ctx.fill();
       }
 
       // Optional: a few “orbit” strokes to hint structure (minimal)
       ctx.save();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(255,120,80,0.14)";
+      ctx.strokeStyle = "rgba(140,100,180,0.14)";
       ctx.setLineDash([4, 9]);
 
       const strokeRings = 4;

@@ -123,6 +123,11 @@ const Workspace = () => {
           return;
         }
 
+        if (evt.type === "conversation.item.input_audio_transcription.failed") {
+          appendLog("TRANSCRIPTION FAILED: " + JSON.stringify(evt));
+          return;
+        }
+
         if (evt.type === "error") {
           appendLog("ERROR: " + JSON.stringify(evt));
         }

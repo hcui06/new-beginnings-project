@@ -91,7 +91,7 @@ const Session = () => {
               Customize your Teaching Assistant
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
-              Drag lecture videos, audio, textbooks, or notes to add context
+              Add lecture videos, audio, textbooks, or notes to add context
             </p>
           </div>
 

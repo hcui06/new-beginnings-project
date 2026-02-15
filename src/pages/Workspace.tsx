@@ -23,6 +23,7 @@ const Workspace = () => {
   const dcRef = useRef<RTCDataChannel | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const turnTranscriptRef = useRef("");
+  const lastSnapshotRef = useRef<string | null>(null);
 
   // ===== whiteboard =====
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -109,6 +110,10 @@ const Workspace = () => {
           const finalText = ((evt.transcript as string) || turnTranscriptRef.current || "").trim();
           showUserTranscript(finalText);
           turnTranscriptRef.current = "";
+
+          // ✅ PIPELINE HOOK: `finalText` contains the user's transcribed speech.
+          // Use it here to send to other parts of the pipeline, e.g.:
+          //   sendToPipeline({ transcript: finalText, whiteboardSnapshot: lastSnapshotRef.current });
           return;
         }
 
@@ -167,6 +172,13 @@ const Workspace = () => {
     setStatus(next ? "Muted" : "Ready — press Talk");
   }
 
+  /** Capture the whiteboard as a JPEG data URL */
+  function captureWhiteboard(): string | null {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }
+
   function toggleTalking() {
     if (!talking) {
       setTalking(true);
@@ -176,6 +188,15 @@ const Workspace = () => {
     } else {
       setTalking(false);
       setStatus("Processing…");
+
+      // Capture whiteboard snapshot when user stops talking
+      const snapshot = captureWhiteboard();
+      lastSnapshotRef.current = snapshot;
+
+      // ✅ PIPELINE HOOK: `snapshot` is a JPEG data URL of the whiteboard.
+      // Use it here alongside the transcript to send to other pipeline stages, e.g.:
+      //   sendToPipeline({ whiteboardSnapshot: snapshot });
+
       sendEvent({ type: "input_audio_buffer.commit" });
       sendEvent({ type: "response.create" });
     }

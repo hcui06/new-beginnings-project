@@ -18,175 +18,125 @@ const SpirographCanvas = ({ className = "", animate = true, size = 600 }: Spirog
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    ctx.scale(dpr, dpr);
+    canvas.width = Math.floor(size * dpr);
+    canvas.height = Math.floor(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     startTimeRef.current = performance.now();
 
-    const draw = (timestamp: number) => {
-      const w = size;
-      const h = size;
-      const cx = w / 2;
-      const cy = h / 2;
-      const elapsed = (timestamp - startTimeRef.current) / 1000;
+    const w = size;
+    const h = size;
+    const cx = w / 2;
+    const cy = h / 2;
+    const perspective = 800;
+    const heartScale = Math.min(w, h) * 0.013;
 
+    // Heart curve parametric: x = 16sin³(t), y = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
+    const heart = (t: number) => {
+      const sinT = Math.sin(t);
+      const x = 16 * sinT * sinT * sinT;
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      return { x, y };
+    };
+
+    const rotateXYZ = (x: number, y: number, z: number, ax: number, ay: number) => {
+      const y1 = y * Math.cos(ax) - z * Math.sin(ax);
+      const z1 = y * Math.sin(ax) + z * Math.cos(ax);
+      const x2 = x * Math.cos(ay) + z1 * Math.sin(ay);
+      const z2 = -x * Math.sin(ay) + z1 * Math.cos(ay);
+      return { x: x2, y: y1, z: z2 };
+    };
+
+    const project = (x: number, y: number, z: number) => {
+      const sc = perspective / (perspective + z);
+      return { x: cx + x * sc, y: cy + y * sc, sc };
+    };
+
+    // Define ring planes — evenly distributed tilts for a globe-like structure
+    const rings = [
+      { tiltX: 0, tiltY: 0, phase: 0 },
+      { tiltX: 0.52, tiltY: 0.15, phase: 0.4 },
+      { tiltX: -0.48, tiltY: 0.5, phase: 0.8 },
+      { tiltX: 0.25, tiltY: -0.55, phase: 1.2 },
+      { tiltX: -0.15, tiltY: -0.4, phase: 1.6 },
+      { tiltX: 0.7, tiltY: 0.3, phase: 2.0 },
+      { tiltX: -0.6, tiltY: 0.1, phase: 2.4 },
+      { tiltX: 0.1, tiltY: 0.7, phase: 2.8 },
+      { tiltX: 1.1, tiltY: 0.15, phase: 3.2 },
+      { tiltX: 0.15, tiltY: 1.1, phase: 3.6 },
+      { tiltX: -0.35, tiltY: 0.65, phase: 4.0 },
+      { tiltX: 0.55, tiltY: -0.35, phase: 4.4 },
+    ];
+
+    const draw = (timestamp: number) => {
+      const elapsed = (timestamp - startTimeRef.current) / 1000;
       ctx.clearRect(0, 0, w, h);
 
-      const maxRadius = Math.min(w, h) * 0.46;
-      const perspective = 700;
+      // Slow global rotation
+      const globalY = elapsed * 0.12;
 
-      // Multiple orbital planes at different tilts — like a wireframe globe
-      const planes = [
-        // Face-on rings
-        { tiltX: 0, tiltY: 0, speed: 1 },
-        // Tilted rings creating sphere-like form
-        { tiltX: 0.5, tiltY: 0.15, speed: -0.7 },
-        { tiltX: -0.45, tiltY: 0.5, speed: 0.8 },
-        { tiltX: 0.25, tiltY: -0.55, speed: -0.9 },
-        { tiltX: -0.15, tiltY: -0.4, speed: 0.6 },
-        { tiltX: 0.6, tiltY: 0.3, speed: -0.5 },
-        { tiltX: -0.55, tiltY: -0.1, speed: 0.75 },
-        { tiltX: 0.1, tiltY: 0.65, speed: -0.65 },
-        { tiltX: 0.7, tiltY: -0.2, speed: 0.55 },
-        { tiltX: -0.3, tiltY: 0.7, speed: -0.85 },
-        { tiltX: 0.35, tiltY: 0.45, speed: 0.4 },
-        { tiltX: -0.6, tiltY: 0.35, speed: -0.6 },
-        // Near-perpendicular planes
-        { tiltX: 1.2, tiltY: 0.1, speed: 0.3 },
-        { tiltX: 0.1, tiltY: 1.2, speed: -0.35 },
-        { tiltX: -0.8, tiltY: 0.6, speed: 0.45 },
-      ];
+      for (let r = 0; r < rings.length; r++) {
+        const ring = rings[r];
+        const dotsPerRing = 120;
 
-      const ringsPerPlane = [3, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1];
+        // Gentle drift on tilt
+        const tx = ring.tiltX + Math.sin(elapsed * 0.08 + ring.phase) * 0.06;
+        const ty = ring.tiltY + globalY;
 
-      for (let p = 0; p < planes.length; p++) {
-        const plane = planes[p];
-        const numRings = ringsPerPlane[p] || 1;
+        // Collect dots with depth for sorting
+        const dots: { sx: number; sy: number; z: number; depth01: number }[] = [];
 
-        for (let ri = 0; ri < numRings; ri++) {
-          const radiusFraction = 0.35 + (ri / numRings) * 0.65 + (p * 0.04);
-          const radius = maxRadius * Math.min(radiusFraction, 1.0);
-          const dotCount = 60 + p * 8 + ri * 20;
-          const rotation = elapsed * 0.35 * plane.speed + p * 0.7 + ri * 0.5;
+        let zMin = Infinity;
+        let zMax = -Infinity;
 
-          const tx = plane.tiltX + elapsed * 0.02 * (p % 2 === 0 ? 1 : -1);
-          const ty = plane.tiltY + elapsed * 0.015 * (p % 2 === 0 ? -1 : 1);
-          const cosTX = Math.cos(tx);
-          const sinTX = Math.sin(tx);
-          const cosTY = Math.cos(ty);
-          const sinTY = Math.sin(ty);
+        for (let d = 0; d < dotsPerRing; d++) {
+          const t = (d / dotsPerRing) * Math.PI * 2;
+          const h2d = heart(t);
 
-          // Draw dots
-          for (let d = 0; d < dotCount; d++) {
-            const angle = (d / dotCount) * Math.PI * 2 + rotation;
-            const px = Math.cos(angle) * radius;
-            const py = Math.sin(angle) * radius;
+          const hx = h2d.x * heartScale;
+          const hy = h2d.y * heartScale;
+          const hz = 0; // heart is flat, rotation gives 3D
 
-            // 3D rotation
-            const y1 = py * cosTX;
-            const z1 = py * sinTX;
-            const x2 = px * cosTY + z1 * sinTY;
-            const z2 = -px * sinTY + z1 * cosTY;
+          const rot = rotateXYZ(hx, hy, hz, tx, ty);
+          zMin = Math.min(zMin, rot.z);
+          zMax = Math.max(zMax, rot.z);
 
-            const sc = perspective / (perspective + z2);
-            const sx = cx + x2 * sc;
-            const sy = cy + y1 * sc;
-
-            const depth = (z2 + maxRadius) / (2 * maxRadius);
-            const dotSize = (1.2 + ri * 0.4) * (0.5 + depth * 0.7) * sc;
-            const opacity = (0.35 + depth * 0.65) * (p < 4 ? 0.9 : 0.7);
-
-            ctx.beginPath();
-            ctx.arc(sx, sy, Math.max(dotSize, 0.5), 0, Math.PI * 2);
-            ctx.fillStyle = `hsla(25, 90%, ${46 + depth * 16}%, ${opacity})`;
-            ctx.fill();
-          }
-
-          // Arc segments on primary planes
-          if (p < 8 && ri === 0) {
-            const arcDots = 80;
-            const arcStart = rotation + p * 0.8;
-            const arcLen = Math.PI * (0.4 + Math.sin(elapsed * 0.25 + p) * 0.35);
-
-            ctx.beginPath();
-            for (let a = 0; a <= arcDots; a++) {
-              const angle = arcStart + (a / arcDots) * arcLen;
-              const px = Math.cos(angle) * radius;
-              const py = Math.sin(angle) * radius;
-              const y1 = py * cosTX;
-              const z1 = py * sinTX;
-              const x2 = px * cosTY + z1 * sinTY;
-              const z2 = -px * sinTY + z1 * cosTY;
-              const sc2 = perspective / (perspective + z2);
-              const sx = cx + x2 * sc2;
-              const sy = cy + y1 * sc2;
-              if (a === 0) ctx.moveTo(sx, sy);
-              else ctx.lineTo(sx, sy);
-            }
-            const depth2 = p < 4 ? 0.5 : 0.3;
-            ctx.strokeStyle = `hsla(25, 85%, 55%, ${depth2})`;
-            ctx.lineWidth = 1.2;
-            ctx.stroke();
-          }
+          const pr = project(rot.x, rot.y, rot.z);
+          dots.push({ sx: pr.x, sy: pr.y, z: rot.z, depth01: 0 });
         }
-      }
 
-      // Radial spokes from center
-      const spokeCount = 12;
-      for (let s = 0; s < spokeCount; s++) {
-        const angle = (s / spokeCount) * Math.PI * 2 + elapsed * 0.015;
-        const len = maxRadius * (0.85 + Math.sin(elapsed * 0.15 + s * 0.8) * 0.15);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
-        ctx.strokeStyle = `hsla(25, 90%, 52%, 0.07)`;
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([3, 10]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+        const zRange = Math.max(1e-6, zMax - zMin);
+        for (const dot of dots) {
+          dot.depth01 = (dot.z - zMin) / zRange;
+        }
 
-      // Horizontal scan lines
-      for (let i = 0; i < 8; i++) {
-        const y = cy + Math.sin(elapsed * 0.25 + i * 0.9) * maxRadius * 0.7;
-        const xOff = maxRadius * 0.4 + i * maxRadius * 0.07;
-        ctx.beginPath();
-        ctx.moveTo(cx - xOff - maxRadius * 0.55, y);
-        ctx.lineTo(cx - xOff, y);
-        ctx.strokeStyle = `hsla(25, 90%, 52%, 0.12)`;
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([2, 6]);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(cx + xOff, y);
-        ctx.lineTo(cx + xOff + maxRadius * 0.55, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+        // Draw connecting lines (heart outline)
+        for (let d = 0; d < dots.length; d++) {
+          const a = dots[d];
+          const b = dots[(d + 1) % dots.length];
+          const depth = (a.depth01 + b.depth01) * 0.5;
+          const alpha = 0.08 + depth * 0.32;
+          const light = 44 + depth * 22;
 
-      // Central crosshair
-      const lineLen = maxRadius * 1.15;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - lineLen);
-      ctx.lineTo(cx, cy + lineLen);
-      ctx.strokeStyle = `hsla(25, 90%, 52%, 0.1)`;
-      ctx.lineWidth = 0.5;
-      ctx.setLineDash([4, 8]);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx - lineLen, cy);
-      ctx.lineTo(cx + lineLen, cy);
-      ctx.stroke();
-      ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(a.sx, a.sy);
+          ctx.lineTo(b.sx, b.sy);
+          ctx.strokeStyle = `hsla(280, 30%, ${light}%, ${alpha})`;
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
 
-      // Center concentric circles
-      for (let c = 0; c < 4; c++) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, 3 + c * 6, 0, Math.PI * 2);
-        ctx.strokeStyle = `hsla(25, 90%, 55%, ${0.25 - c * 0.05})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+        // Draw dots on top
+        for (const dot of dots) {
+          const dotSize = 0.6 + dot.depth01 * 1.2;
+          const alpha = 0.15 + dot.depth01 * 0.5;
+          const light = 46 + dot.depth01 * 18;
+
+          ctx.beginPath();
+          ctx.arc(dot.sx, dot.sy, dotSize, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(280, 30%, ${light}%, ${alpha})`;
+          ctx.fill();
+        }
       }
 
       if (animate) {
@@ -196,9 +146,7 @@ const SpirographCanvas = ({ className = "", animate = true, size = 600 }: Spirog
 
     animationRef.current = requestAnimationFrame(draw);
 
-    return () => {
-      cancelAnimationFrame(animationRef.current);
-    };
+    return () => cancelAnimationFrame(animationRef.current);
   }, [animate, size]);
 
   return (

@@ -314,17 +314,6 @@ const Workspace = () => {
             <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
 
-          {/* Transcript display — shows what user said */}
-          {userTranscript && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="border-t border-border bg-card/50 px-4 py-3"
-            >
-              <p className="text-sm leading-relaxed font-mono text-muted-foreground">You: {userTranscript}</p>
-            </motion.div>
-          )}
         </div>
       </div>
     </div>

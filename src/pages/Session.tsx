@@ -2,116 +2,73 @@ import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { SITE_NAME } from "@/config/site";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, FileVideo, BookOpen, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, X, FileVideo, FileAudio, FileText, File } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UploadFile {
   file: File;
   name: string;
   type: string;
+  category: "video" | "audio" | "pdf" | "document" | "text" | "unknown";
 }
 
-const DropZone = ({
-  label,
-  icon: Icon,
-  accept,
-  description,
-  file,
-  onFile,
-  onRemove,
-}: {
-  label: string;
-  icon: React.ElementType;
-  accept: string;
-  description: string;
-  file: UploadFile | null;
-  onFile: (f: UploadFile) => void;
-  onRemove: () => void;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+function detectCategory(file: File): UploadFile["category"] {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (file.type.startsWith("video/") || ["mp4", "webm", "mov", "avi"].includes(ext)) return "video";
+  if (file.type.startsWith("audio/") || ["mp3", "wav", "m4a", "ogg"].includes(ext)) return "audio";
+  if (file.type === "application/pdf" || ext === "pdf") return "pdf";
+  if (["doc", "docx"].includes(ext) || file.type.includes("word")) return "document";
+  if (["txt", "md", "markdown"].includes(ext) || file.type.startsWith("text/")) return "text";
+  return "unknown";
+}
+
+const categoryIcon: Record<UploadFile["category"], React.ElementType> = {
+  video: FileVideo,
+  audio: FileAudio,
+  pdf: FileText,
+  document: FileText,
+  text: File,
+  unknown: File,
+};
+
+const categoryLabel: Record<UploadFile["category"], string> = {
+  video: "Video",
+  audio: "Audio",
+  pdf: "PDF",
+  document: "Document",
+  text: "Text",
+  unknown: "File",
+};
+
+const Session = () => {
+  const navigate = useNavigate();
+  const [files, setFiles] = useState<UploadFile[]>([]);
   const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = useCallback((fileList: FileList | null) => {
+    if (!fileList) return;
+    const newFiles: UploadFile[] = Array.from(fileList).map((f) => ({
+      file: f,
+      name: f.name,
+      type: f.type,
+      category: detectCategory(f),
+    }));
+    setFiles((prev) => [...prev, ...newFiles]);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragging(false);
-      const f = e.dataTransfer.files?.[0];
-      if (f) onFile({ file: f, name: f.name, type: f.type });
+      addFiles(e.dataTransfer.files);
     },
-    [onFile]
+    [addFiles]
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) onFile({ file: f, name: f.name, type: f.type });
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
-
-  if (file) {
-    return (
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/5 p-6"
-      >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="h-6 w-6 text-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{label} uploaded</p>
-        </div>
-        <button
-          onClick={onRemove}
-          className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </motion.div>
-    );
-  }
-
-  return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
-      className={`group cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
-        dragging
-          ? "border-primary bg-primary/5 scale-[1.02]"
-          : "border-border hover:border-primary/50 hover:bg-card"
-      }`}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={handleChange}
-      />
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-colors group-hover:bg-primary/15">
-        <Icon className="h-7 w-7 text-primary" />
-      </div>
-      <p className="font-semibold text-foreground">{label}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      <p className="mt-3 text-xs text-muted-foreground/60">
-        <span className="inline-flex items-center gap-1">
-          <Upload className="h-3 w-3" /> Drag & drop or click to browse
-        </span>
-      </p>
-    </div>
-  );
-};
-
-const Session = () => {
-  const navigate = useNavigate();
-  const [video, setVideo] = useState<UploadFile | null>(null);
-  const [textbook, setTextbook] = useState<UploadFile | null>(null);
-
-  const canStart = video || textbook;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -120,64 +77,114 @@ const Session = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="font-display text-lg font-semibold">{SITE_NAME}</h1>
-        <span className="ml-auto rounded-full bg-primary/10 px-3 py-1 text-xs font-mono text-primary">
-          Customize Your TA
-        </span>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 py-12">
+      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <motion.div
-          className="w-full max-w-xl"
+          className="w-full max-w-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Customize your assistant
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Upload a lecture video or textbook to personalize your AI teaching assistant.
+          {/* Sigma drop zone */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => inputRef.current?.click()}
+            className={`group relative mx-auto flex h-52 w-52 cursor-pointer flex-col items-center justify-center rounded-full border-2 border-dashed transition-all duration-300 ${
+              dragging
+                ? "border-primary bg-primary/10 scale-105"
+                : "border-border hover:border-primary/50 hover:bg-primary/5"
+            }`}
+          >
+            <span
+              className={`text-7xl font-bold leading-none transition-colors duration-200 ${
+                dragging ? "text-primary" : "text-primary/40 group-hover:text-primary/70"
+              }`}
+            >
+              Σ
+            </span>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Drop files here
             </p>
           </div>
 
-          <div className="space-y-5">
-            <DropZone
-              label="Lecture Video"
-              icon={FileVideo}
-              accept="video/*"
-              description="Upload a lecture recording to reference during your session"
-              file={video}
-              onFile={setVideo}
-              onRemove={() => setVideo(null)}
-            />
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md"
+            className="hidden"
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
 
-            <DropZone
-              label="Textbook or Notes"
-              icon={BookOpen}
-              accept=".pdf,.doc,.docx,.txt,.md"
-              description="Upload a PDF, doc, or text file for context"
-              file={textbook}
-              onFile={setTextbook}
-              onRemove={() => setTextbook(null)}
-            />
-          </div>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Drag lecture videos, audio, PDFs, or notes to add context
+          </p>
 
+          {/* File collection */}
+          <AnimatePresence>
+            {files.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mt-6 space-y-2"
+              >
+                {files.map((f, i) => {
+                  const Icon = categoryIcon[f.category];
+                  return (
+                    <motion.div
+                      key={`${f.name}-${i}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground uppercase">
+                        {categoryLabel[f.category]}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(i);
+                        }}
+                        className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Actions */}
           <div className="mt-10 flex flex-col items-center gap-3">
             <Button
               size="lg"
               className="px-10 py-6 text-base rounded-xl font-semibold w-full sm:w-auto"
-              disabled={!canStart}
               onClick={() => navigate("/workspace")}
             >
               Start Session
             </Button>
-            <button
-              className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
-              onClick={() => navigate("/workspace")}
-            >
-              Skip — start without uploads
-            </button>
+            {files.length === 0 && (
+              <button
+                className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
+                onClick={() => navigate("/workspace")}
+              >
+                Skip — start without uploads
+              </button>
+            )}
           </div>
         </motion.div>
       </main>

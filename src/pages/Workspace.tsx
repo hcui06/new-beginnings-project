@@ -290,7 +290,7 @@ const Workspace = () => {
           {log && (
             <div
               ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
-              className="border-t border-border bg-muted/30 px-4 py-2 max-h-40 overflow-auto"
+              className="border-t border-border bg-muted/30 px-4 py-2 max-h-24 overflow-auto"
             >
               <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">{log}</pre>
             </div>

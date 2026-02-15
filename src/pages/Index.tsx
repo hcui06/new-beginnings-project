@@ -67,24 +67,29 @@ const Index = () => {
             <motion.div
               initial={{ scale: 0, rotate: -180, opacity: 0 }}
               animate={{
-                scale: [0, 1, 1.05, 1],
-                rotate: [-180, 0, 0, 0],
+                scale: 1,
+                rotate: 0,
                 opacity: 1,
               }}
               transition={{
                 duration: 1.5,
                 ease: [0.16, 1, 0.3, 1],
-                scale: {
-                  duration: 1.5,
-                  ease: [0.16, 1, 0.3, 1],
-                  times: [0, 0.5, 0.7, 1],
-                },
               }}
               style={{
                 filter: "drop-shadow(0 0 24px hsla(280, 30%, 55%, 0.35))",
               }}
             >
-              <SpirographCanvas animate size={500} />
+              <motion.div
+                animate={{ scale: [1, 1.06, 1, 1.04, 1] }}
+                transition={{
+                  duration: 1.8,
+                  ease: "easeInOut",
+                  repeat: Infinity,
+                  repeatDelay: 0.2,
+                }}
+              >
+                <SpirographCanvas animate size={500} />
+              </motion.div>
             </motion.div>
 
             <motion.p

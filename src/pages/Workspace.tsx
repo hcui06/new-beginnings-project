@@ -183,8 +183,11 @@ const Workspace = () => {
     return canvas.toDataURL("image/jpeg", 0.85);
   }
 
-  function toggleTalking() {
+  async function toggleTalking() {
     if (!talking) {
+      if (!started) {
+        await start();
+      }
       setTalking(true);
       setStatus("Listening…");
       turnTranscriptRef.current = "";
@@ -310,22 +313,18 @@ const Workspace = () => {
             {inputMode === "audio" ? (
               <>
                 <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
-                {!started ? (
-                  <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
-                    Start Session
-                  </Button>
-                ) : (
+                <Button
+                  size="sm"
+                  variant={talking ? "destructive" : "default"}
+                  className="gap-2"
+                  onClick={toggleTalking}
+                  disabled={muted}
+                >
+                  {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {talking ? "Stop" : "Talk"}
+                </Button>
+                {started && (
                   <>
-                    <Button
-                      size="sm"
-                      variant={talking ? "destructive" : "default"}
-                      className="gap-2"
-                      onClick={toggleTalking}
-                      disabled={muted}
-                    >
-                      {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                      {talking ? "Stop" : "Talk"}
-                    </Button>
                     <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
                       {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                     </Button>

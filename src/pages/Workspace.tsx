@@ -288,7 +288,7 @@ const Workspace = () => {
           </div>
 
           {/* Audio controls */}
-          <div className="px-4 py-2 border-t border-border bg-card/30">
+          <div className="px-4 py-2 border-t border-b border-border bg-card/30">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Audio / Text Input</span>
           </div>
           <div className="bg-card/30 px-4 py-4 flex items-center justify-center gap-3">

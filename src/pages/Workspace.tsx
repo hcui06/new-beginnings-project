@@ -95,23 +95,17 @@ const Workspace = () => {
         sendEvent({
           type: "session.update",
           session: {
-            type: "realtime",
-            model: "gpt-realtime",
             input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
-            output_modalities: ["audio"],
-            audio: {
-              input: {
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.55,
-                  prefix_padding_ms: 250,
-                  silence_duration_ms: 1500,
-                  create_response: false,
-                  interrupt_response: true,
-                },
-              },
-              output: { voice: "marin" },
+            modalities: ["text", "audio"],
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.55,
+              prefix_padding_ms: 250,
+              silence_duration_ms: 1500,
+              create_response: false,
+              interrupt_response: true,
             },
+            voice: "ash",
           },
         });
       };

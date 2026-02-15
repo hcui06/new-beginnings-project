@@ -17,6 +17,7 @@ const Workspace = () => {
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(false);
   const [userTranscript, setUserTranscript] = useState("");
+  const [talking, setTalking] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -75,21 +76,13 @@ const Workspace = () => {
 
       dc.onopen = () => {
         setStarted(true);
-        setStatus("Connected — speak naturally");
+        setStatus("Connected — press Talk");
 
         sendEvent({
           type: "session.update",
           session: {
             input_audio_transcription: { model: "whisper-1" },
-            modalities: ["text", "audio"],
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.3,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 500,
-              create_response: true,
-              interrupt_response: true,
-            },
+            turn_detection: null,
             voice: "ash",
           },
         });
@@ -104,7 +97,6 @@ const Workspace = () => {
         }
 
         if (evt.type === "input_audio_buffer.speech_started") {
-          turnTranscript = "";
           return;
         }
 
@@ -159,7 +151,7 @@ const Workspace = () => {
 
       const answerSdp = await r.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      setStatus("Live — speak naturally");
+      setStatus("Connected — press Talk");
     } catch (err) {
       setStatus(`Error: ${err instanceof Error ? err.message : "Unknown"}`);
     }
@@ -171,7 +163,20 @@ const Workspace = () => {
     const next = !muted;
     setMuted(next);
     stream.getAudioTracks().forEach((t) => (t.enabled = !next));
-    setStatus(next ? "Muted" : "Live — speak naturally");
+    setStatus(next ? "Muted" : "Ready — press Talk");
+  }
+
+  function startTalking() {
+    setTalking(true);
+    setStatus("Listening…");
+    sendEvent({ type: "input_audio_buffer.clear" });
+  }
+
+  function stopTalking() {
+    setTalking(false);
+    setStatus("Processing…");
+    sendEvent({ type: "input_audio_buffer.commit" });
+    sendEvent({ type: "response.create" });
   }
 
   function stop() {
@@ -219,6 +224,19 @@ const Workspace = () => {
             </Button>
           ) : (
             <>
+              <Button
+                size="sm"
+                variant={talking ? "destructive" : "default"}
+                className="gap-2"
+                onMouseDown={startTalking}
+                onMouseUp={stopTalking}
+                onTouchStart={startTalking}
+                onTouchEnd={stopTalking}
+                disabled={muted}
+              >
+                {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {talking ? "Release to Send" : "Hold to Talk"}
+              </Button>
               <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
                 {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
@@ -255,8 +273,7 @@ const Workspace = () => {
 
             {!started && !subtitles && (
               <p className="mt-6 text-sm text-muted-foreground text-center max-w-xs">
-                Start the session to connect with your AI teaching assistant. Speak naturally and draw on the
-                whiteboard.
+                Start the session, then hold the Talk button to speak. Release to send your message.
               </p>
             )}
           </div>

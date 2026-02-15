@@ -97,7 +97,7 @@ const Workspace = () => {
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.65,
+              threshold: 0.75,
               prefix_padding_ms: 250,
               silence_duration_ms: 1500,
               create_response: false,

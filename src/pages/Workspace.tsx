@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { SITE_NAME } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import Whiteboard from "@/components/Whiteboard";
-import LovelaceToroid from "@/components/LovelaceToroid";
+import SpirographCanvas from "@/components/SpirographCanvas";
 import { ArrowLeft, Mic, MicOff, Phone, PhoneOff, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { Textarea } from "@/components/ui/textarea";
@@ -264,7 +264,7 @@ const Workspace = () => {
 
           <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
             <div className="w-64 h-64 opacity-60">
-              <LovelaceToroid animate={started} size={256} />
+              <SpirographCanvas animate={started} size={256} />
             </div>
 
             {subtitles && (

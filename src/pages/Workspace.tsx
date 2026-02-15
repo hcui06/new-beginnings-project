@@ -97,9 +97,9 @@ const Workspace = () => {
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.65,
-              prefix_padding_ms: 250,
-              silence_duration_ms: 1500,
+              threshold: 0.4,
+              prefix_padding_ms: 400,
+              silence_duration_ms: 800,
               create_response: false,
               interrupt_response: true,
             },
@@ -118,7 +118,6 @@ const Workspace = () => {
 
         if (evt.type === "input_audio_buffer.speech_started") {
           turnTranscript = "";
-          appendLog("speech_started");
           return;
         }
 
@@ -128,17 +127,16 @@ const Workspace = () => {
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          turnTranscript = (evt.transcript as string) || turnTranscript || "";
+          // This fires when the server finishes transcribing the turn
+          const finalText = ((evt.transcript as string) || turnTranscript || "").trim();
+          appendLog("transcription_completed: " + finalText);
+          finalizeAndSendTurn(finalText);
+          turnTranscript = "";
           return;
         }
 
         if (evt.type === "input_audio_buffer.speech_stopped") {
-          appendLog("speech_stopped");
-          setTimeout(() => {
-            const text = (turnTranscript || "").trim();
-            finalizeAndSendTurn(text);
-            turnTranscript = "";
-          }, 250);
+          // Don't finalize here — wait for transcription.completed
           return;
         }
 

@@ -86,6 +86,15 @@ const Session = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Customize your Teaching Assistant
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground">
+              Drag lecture videos, audio, textbooks, or notes to add context
+            </p>
+          </div>
+
           {/* Sigma drop zone */}
           <motion.div
             onDragOver={(e) => {
@@ -139,10 +148,6 @@ const Session = () => {
               e.target.value = "";
             }}
           />
-
-          <p className="mt-5 text-center text-base text-muted-foreground">
-            Drag lecture videos, audio, textbooks, or notes to add context
-          </p>
 
           {/* File collection */}
           <AnimatePresence>

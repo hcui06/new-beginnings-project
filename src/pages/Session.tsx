@@ -131,7 +131,7 @@ const Session = () => {
               >
                 Σ
               </span>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Drop files here
               </p>
             </div>

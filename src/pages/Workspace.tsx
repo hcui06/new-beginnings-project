@@ -237,34 +237,7 @@ const Workspace = () => {
         </Button>
         <h1 className="font-display text-lg font-semibold">{SITE_NAME}</h1>
 
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
-
-          {!started ? (
-            <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
-              Start Session
-            </Button>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant={talking ? "destructive" : "default"}
-                className="gap-2"
-                onClick={toggleTalking}
-                disabled={muted}
-              >
-                {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                {talking ? "Stop" : "Talk"}
-              </Button>
-              <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
-                {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-              <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
-                <PhoneOff className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
+        
       </header>
 
       {/* Main workspace */}
@@ -305,7 +278,7 @@ const Workspace = () => {
           )}
         </div>
 
-        {/* Right: Whiteboard + Transcript */}
+        {/* Right: Whiteboard + Audio Controls */}
         <div className="w-1/2 flex flex-col">
           <div className="px-4 py-2 border-b border-border bg-card/30">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Whiteboard</span>
@@ -314,6 +287,35 @@ const Workspace = () => {
             <Whiteboard canvasRef={canvasRef} className="h-full" />
           </div>
 
+          {/* Audio controls */}
+          <div className="border-t border-border bg-card/30 px-4 py-3 flex items-center justify-center gap-3">
+            <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
+
+            {!started ? (
+              <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
+                Start Session
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant={talking ? "destructive" : "default"}
+                  className="gap-2"
+                  onClick={toggleTalking}
+                  disabled={muted}
+                >
+                  {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {talking ? "Stop" : "Talk"}
+                </Button>
+                <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
+                  {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+                <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
+                  <PhoneOff className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

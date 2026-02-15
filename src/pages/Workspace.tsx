@@ -303,9 +303,9 @@ const Workspace = () => {
           <div className="px-4 py-2 border-b border-border bg-card/30 flex items-center justify-between">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">User Input</span>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "audio" ? "text-foreground" : "text-muted-foreground"}`}>Audio</span>
+              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "audio" ? "text-primary font-semibold" : "text-muted-foreground"}`}>Audio</span>
               <Switch checked={inputMode === "text"} onCheckedChange={(checked) => setInputMode(checked ? "text" : "audio")} />
-              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "text" ? "text-foreground" : "text-muted-foreground"}`}>Text</span>
+              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "text" ? "text-primary font-semibold" : "text-muted-foreground"}`}>Text</span>
             </div>
           </div>
 

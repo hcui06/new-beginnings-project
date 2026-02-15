@@ -4,35 +4,34 @@ const symbols = [
   "σ", "♥", "Ω",
 ];
 
-// Deterministic positions ensuring top-left coverage
 const positions = [
-  { left: 4, top: 6 },    // top-left
-  { left: 15, top: 3 },   // top-left
-  { left: 8, top: 18 },   // top-left
-  { left: 25, top: 8 },   // top area
+  { left: 8, top: 8 },
+  { left: 22, top: 4 },
+  { left: 38, top: 10 },
   { left: 55, top: 5 },
   { left: 72, top: 12 },
   { left: 88, top: 7 },
-  { left: 40, top: 22 },
-  { left: 12, top: 35 },
+  { left: 14, top: 25 },
+  { left: 45, top: 22 },
   { left: 65, top: 30 },
   { left: 85, top: 28 },
-  { left: 30, top: 45 },
+  { left: 6, top: 45 },
+  { left: 30, top: 42 },
   { left: 50, top: 55 },
   { left: 78, top: 50 },
-  { left: 18, top: 60 },
+  { left: 18, top: 65 },
   { left: 92, top: 42 },
-  { left: 5, top: 75 },
+  { left: 5, top: 80 },
   { left: 42, top: 70 },
   { left: 70, top: 68 },
   { left: 90, top: 78 },
-  { left: 28, top: 82 },
+  { left: 28, top: 85 },
   { left: 58, top: 85 },
-  { left: 3, top: 48 },
-  { left: 48, top: 38 },
-  { left: 35, top: 15 },
+  { left: 35, top: 38 },
   { left: 82, top: 60 },
-  { left: 20, top: 90 },
+  { left: 48, top: 92 },
+  { left: 75, top: 88 },
+  { left: 15, top: 52 },
 ];
 
 const MathSymbols = () => {

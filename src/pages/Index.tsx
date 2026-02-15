@@ -80,7 +80,7 @@ const Index = () => {
               }}
             >
               <motion.div
-                animate={{ scale: [1, 1.06, 1, 1.04, 1, 1, 1] }}
+                animate={{ scale: [1, 1.12, 1, 1.08, 1, 1, 1] }}
                 transition={{
                   duration: 1.6,
                   ease: "easeInOut",

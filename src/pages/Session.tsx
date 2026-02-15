@@ -198,12 +198,7 @@ const Session = () => {
               Start Session
             </Button>
             {files.length === 0 && (
-              <button
-                className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
-                onClick={() => navigate("/workspace")}
-              >
-                Skip — start without uploads
-              </button>
+              <p className="text-xs text-muted-foreground">No files? No problem — just start.</p>
             )}
           </div>
         </motion.div>

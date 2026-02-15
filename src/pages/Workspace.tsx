@@ -324,16 +324,6 @@ const Workspace = () => {
                   {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                   {talking ? "Stop" : "Talk"}
                 </Button>
-                {started && (
-                  <>
-                    <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
-                      {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    </Button>
-                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
-                      <PhoneOff className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
               </>
             ) : (
               <div className="flex w-full gap-2 items-center">

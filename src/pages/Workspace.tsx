@@ -80,7 +80,7 @@ const Workspace = () => {
         sendEvent({
           type: "session.update",
           session: {
-            input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
+            input_audio_transcription: { model: "whisper-1" },
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",

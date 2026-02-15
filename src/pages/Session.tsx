@@ -99,7 +99,7 @@ const Session = () => {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            className="group relative mx-auto flex h-60 w-60 cursor-pointer items-center justify-center"
+            className="group relative mx-auto flex h-72 w-72 cursor-pointer items-center justify-center"
           >
             {/* Translucent bubble */}
             <div
@@ -116,7 +116,7 @@ const Session = () => {
 
             <div className="relative flex flex-col items-center">
               <span
-                className={`text-[7rem] font-bold leading-none transition-colors duration-200 ${
+                className={`text-[9rem] font-bold leading-none transition-colors duration-200 ${
                   dragging ? "text-primary" : "text-primary/30 group-hover:text-primary/60"
                 }`}
               >
@@ -140,8 +140,8 @@ const Session = () => {
             }}
           />
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Drag lecture videos, audio, PDFs, or notes to add context
+          <p className="mt-5 text-center text-base text-muted-foreground">
+            Drag lecture videos, audio, textbooks, or notes to add context
           </p>
 
           {/* File collection */}

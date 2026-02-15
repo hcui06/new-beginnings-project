@@ -241,8 +241,7 @@ const Workspace = () => {
           <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
 
           {!started ? (
-            <Button size="sm" className="gap-2" onClick={start}>
-              <Phone className="h-4 w-4" />
+            <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
               Start Session
             </Button>
           ) : (

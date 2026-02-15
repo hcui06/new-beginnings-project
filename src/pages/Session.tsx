@@ -87,7 +87,7 @@ const Session = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           {/* Sigma drop zone */}
-          <div
+          <motion.div
             onDragOver={(e) => {
               e.preventDefault();
               setDragging(true);
@@ -95,21 +95,25 @@ const Session = () => {
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
-            className="group relative mx-auto flex h-56 w-56 cursor-pointer items-center justify-center"
+            animate={dragging ? { scale: 1.08 } : { scale: 1 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="group relative mx-auto flex h-60 w-60 cursor-pointer items-center justify-center"
           >
-            {/* Bubble background */}
+            {/* Translucent bubble */}
             <div
-              className={`absolute inset-0 rounded-full transition-all duration-300 ${
+              className={`absolute inset-0 rounded-full backdrop-blur-sm transition-all duration-300 ${
                 dragging
-                  ? "bg-primary/15 shadow-[0_0_40px_hsl(var(--primary)/0.3)] scale-105"
-                  : "bg-primary/[0.06] group-hover:bg-primary/10 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
+                  ? "bg-primary/20 shadow-[0_8px_40px_hsl(var(--primary)/0.25),inset_0_-4px_12px_hsl(var(--primary)/0.1)]"
+                  : "bg-primary/[0.08] shadow-[0_4px_20px_hsl(var(--primary)/0.08),inset_0_-2px_8px_hsl(var(--primary)/0.05)] group-hover:bg-primary/[0.12] group-hover:shadow-[0_6px_30px_hsl(var(--primary)/0.15),inset_0_-3px_10px_hsl(var(--primary)/0.08)]"
               }`}
             />
-            <div
-              className={`absolute inset-2 rounded-full border-2 border-dashed transition-all duration-300 ${
-                dragging ? "border-primary/50" : "border-primary/15 group-hover:border-primary/30"
-              }`}
-            />
+            {/* Glass highlight */}
+            <div className="absolute inset-0 rounded-full overflow-hidden">
+              <div className="absolute top-2 left-6 right-6 h-[40%] rounded-full bg-gradient-to-b from-white/[0.15] to-transparent" />
+            </div>
+
             <div className="relative flex flex-col items-center">
               <span
                 className={`text-[7rem] font-bold leading-none transition-colors duration-200 ${
@@ -122,7 +126,7 @@ const Session = () => {
                 Drop files here
               </p>
             </div>
-          </div>
+          </motion.div>
 
           <input
             ref={inputRef}

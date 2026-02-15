@@ -80,7 +80,7 @@ const Workspace = () => {
         sendEvent({
           type: "session.update",
           session: {
-            input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
+            input_audio_transcription: { model: "whisper-1" },
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
@@ -125,12 +125,12 @@ const Workspace = () => {
           return;
         }
 
-        if (evt.type === "response.output_text.delta" && evt.delta) {
+        if (evt.type === "response.audio_transcript.delta" && evt.delta) {
           setSubtitles((prev) => prev + (evt.delta as string));
           return;
         }
 
-        if (evt.type === "response.output_text.done") {
+        if (evt.type === "response.audio_transcript.done") {
           setTimeout(() => setSubtitles(""), 1200);
           return;
         }

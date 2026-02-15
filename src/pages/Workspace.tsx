@@ -99,7 +99,7 @@ const Workspace = () => {
         }
 
         // Debug: log all event types
-        appendLog("EVT: " + (evt.type as string));
+        // appendLog("EVT: " + (evt.type as string));
 
         if (evt.type === "conversation.item.input_audio_transcription.delta") {
           turnTranscriptRef.current += (evt.delta as string) || "";

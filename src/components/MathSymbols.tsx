@@ -1,37 +1,40 @@
 const symbols = [
-  "∫", "∑", "π", "∞", "√", "Δ", "∂", "∇", "∈", "∀", "λ", "θ",
-  "♥", "±", "≈", "♥", "∮", "ℝ", "♥", "⊂", "∝", "♥", "ε", "φ",
-  "σ", "♥", "Ω",
+  "∫", "♥", "π", "∞", "√", "♥", "∂", "∇", "♥", "∀", "λ", "θ",
+  "♥", "±", "≈", "Δ", "∮", "♥", "∑", "⊂", "♥", "ℝ", "ε", "♥",
+  "σ", "∝", "♥", "Ω", "φ", "♥",
 ];
 
 const positions = [
   { left: 8, top: 8 },
-  { left: 22, top: 4 },
-  { left: 38, top: 10 },
-  { left: 55, top: 5 },
-  { left: 72, top: 12 },
-  { left: 88, top: 7 },
+  { left: 28, top: 4 },   // ♥
+  { left: 45, top: 10 },
+  { left: 62, top: 5 },
+  { left: 80, top: 12 },
+  { left: 92, top: 25 },  // ♥
   { left: 14, top: 25 },
-  { left: 45, top: 22 },
-  { left: 65, top: 30 },
-  { left: 85, top: 28 },
-  { left: 6, top: 45 },
-  { left: 30, top: 42 },
-  { left: 50, top: 55 },
-  { left: 78, top: 50 },
-  { left: 18, top: 65 },
-  { left: 92, top: 42 },
-  { left: 5, top: 80 },
-  { left: 42, top: 70 },
-  { left: 70, top: 68 },
-  { left: 90, top: 78 },
-  { left: 28, top: 85 },
-  { left: 58, top: 85 },
+  { left: 50, top: 22 },
+  { left: 70, top: 18 },  // ♥
+  { left: 85, top: 35 },
+  { left: 6, top: 42 },
   { left: 35, top: 38 },
-  { left: 82, top: 60 },
-  { left: 48, top: 92 },
-  { left: 75, top: 88 },
-  { left: 15, top: 52 },
+  { left: 18, top: 58 },  // ♥
+  { left: 55, top: 45 },
+  { left: 78, top: 50 },
+  { left: 42, top: 55 },
+  { left: 65, top: 60 },
+  { left: 88, top: 58 },  // ♥
+  { left: 30, top: 68 },
+  { left: 5, top: 75 },
+  { left: 50, top: 72 },  // ♥
+  { left: 75, top: 70 },
+  { left: 22, top: 82 },
+  { left: 60, top: 85 },  // ♥
+  { left: 90, top: 80 },
+  { left: 40, top: 90 },
+  { left: 12, top: 92 },  // ♥
+  { left: 72, top: 88 },
+  { left: 82, top: 92 },
+  { left: 48, top: 32 },  // ♥
 ];
 
 const MathSymbols = () => {

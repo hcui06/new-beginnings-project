@@ -99,7 +99,7 @@ const Workspace = () => {
               type: "server_vad",
               threshold: 0.75,
               prefix_padding_ms: 250,
-              silence_duration_ms: 1500,
+              silence_duration_ms: 1000,
               create_response: false,
               interrupt_response: true,
             },

@@ -12,7 +12,7 @@ const LovelaceToroid = ({
   className = "",
   animate = true,
   size = 600,
-  tSteps = 140,
+  tSteps = 160,
   uSteps = 90,
 }: LovelaceToroidProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,6 +36,7 @@ const LovelaceToroid = ({
     const cy = h / 2;
 
     const perspective = 950;
+    const scale = size * 0.075;
 
     const project = (x: number, y: number, z: number) => {
       const sc = perspective / (perspective + z);
@@ -59,14 +60,11 @@ const LovelaceToroid = ({
 
     const surface = (t: number, u: number) => {
       const x = 3 + Math.sin(t) + Math.cos(u);
-      const y = 2 * t;
+      const A = 3.2;
+      const y = A * (Math.sin(t) + 0.35 * Math.sin(2 * t));
       const z = Math.sin(u) + 2 * Math.cos(t);
       return { x, y, z };
     };
-
-    const scaleX = size * 0.08;
-    const scaleY = size * 0.025;
-    const scaleZ = size * 0.08;
 
     const draw = (ts: number) => {
       const time = (ts - startRef.current) / 1000;
@@ -77,21 +75,20 @@ const LovelaceToroid = ({
       const az = 0.35 + Math.cos(time * 0.18) * 0.08;
 
       const grid: { sx: number; sy: number; z: number; depth01: number }[][] = [];
-      const yCenter = 2 * Math.PI;
 
       let zMin = Infinity;
       let zMax = -Infinity;
 
       for (let i = 0; i < tSteps; i++) {
-        const t = (i / (tSteps - 1)) * Math.PI * 2;
+        const t = (i / tSteps) * Math.PI * 2;
         const row = [];
         for (let j = 0; j < uSteps; j++) {
           const u = (j / uSteps) * Math.PI * 2;
           const p = surface(t, u);
 
-          const x = p.x * scaleX;
-          const y = (p.y - yCenter) * scaleY;
-          const z = p.z * scaleZ;
+          const x = p.x * scale;
+          const y = p.y * scale * 0.6;
+          const z = p.z * scale;
 
           const rot = rotateXYZ(x, y, z, ax, ay, az);
           zMin = Math.min(zMin, rot.z);
@@ -112,14 +109,14 @@ const LovelaceToroid = ({
 
       const segs: Array<{ z: number; draw: () => void }> = [];
 
-      // u-direction lines (wrap)
+      // along u (wrap)
       for (let i = 0; i < tSteps; i++) {
         for (let j = 0; j < uSteps; j++) {
           const a = grid[i][j];
           const b = grid[i][(j + 1) % uSteps];
           const depth = (a.depth01 + b.depth01) * 0.5;
-          const alpha = 0.06 + depth * 0.22;
-          const light = 44 + depth * 22;
+          const alpha = 0.07 + depth * 0.25;
+          const light = 44 + depth * 24;
 
           segs.push({
             z: (a.z + b.z) * 0.5,
@@ -135,14 +132,15 @@ const LovelaceToroid = ({
         }
       }
 
-      // t-direction lines (no wrap)
-      for (let i = 0; i < tSteps - 1; i++) {
+      // along t (wraps → full loop)
+      for (let i = 0; i < tSteps; i++) {
+        const next = (i + 1) % tSteps;
         for (let j = 0; j < uSteps; j++) {
           const a = grid[i][j];
-          const b = grid[i + 1][j];
+          const b = grid[next][j];
           const depth = (a.depth01 + b.depth01) * 0.5;
-          const alpha = 0.05 + depth * 0.18;
-          const light = 42 + depth * 20;
+          const alpha = 0.05 + depth * 0.20;
+          const light = 42 + depth * 22;
 
           segs.push({
             z: (a.z + b.z) * 0.5,
@@ -160,18 +158,6 @@ const LovelaceToroid = ({
 
       segs.sort((a, b) => a.z - b.z);
       for (const s of segs) s.draw();
-
-      // sparkly highlight points
-      for (let i = 0; i < tSteps; i += 6) {
-        for (let j = 0; j < uSteps; j += 6) {
-          const p = grid[i][j];
-          const d = p.depth01;
-          ctx.beginPath();
-          ctx.arc(p.sx, p.sy, 0.7 + d * 1.2, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(275, 35%, ${52 + d * 18}%, ${0.10 + d * 0.35})`;
-          ctx.fill();
-        }
-      }
 
       if (animate) rafRef.current = requestAnimationFrame(draw);
     };

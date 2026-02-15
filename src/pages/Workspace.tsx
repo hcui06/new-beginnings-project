@@ -4,8 +4,10 @@ import { SITE_NAME } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import Whiteboard from "@/components/Whiteboard";
 import SpirographCanvas from "@/components/SpirographCanvas";
-import { ArrowLeft, Mic, MicOff, Phone, PhoneOff } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Phone, PhoneOff, Send } from "lucide-react";
 import { motion } from "framer-motion";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 const Workspace = () => {
   const navigate = useNavigate();
@@ -18,6 +20,8 @@ const Workspace = () => {
   const [muted, setMuted] = useState(false);
   const [userTranscript, setUserTranscript] = useState("");
   const [talking, setTalking] = useState(false);
+  const [inputMode, setInputMode] = useState<"audio" | "text">("audio");
+  const [textInput, setTextInput] = useState("");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -202,6 +206,17 @@ const Workspace = () => {
     }
   }
 
+  function sendTextMessage() {
+    const text = textInput.trim();
+    if (!text) return;
+    showUserTranscript(text);
+    setTextInput("");
+
+    // ✅ PIPELINE HOOK: `text` is the user's typed message.
+    // Treat it the same as transcribed speech, e.g.:
+    //   sendToPipeline({ transcript: text, whiteboardSnapshot: lastSnapshotRef.current });
+  }
+
   function stop() {
     dcRef.current?.close();
     pcRef.current?.close();
@@ -278,46 +293,75 @@ const Workspace = () => {
           )}
         </div>
 
-        {/* Right: Whiteboard + Audio Controls */}
+        {/* Right: User Input + Whiteboard */}
         <div className="w-1/2 flex flex-col">
-          <div className="px-4 py-2 border-b border-border bg-card/30">
+          {/* User Input header with toggle */}
+          <div className="px-4 py-2 border-b border-border bg-card/30 flex items-center justify-between">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">User Input</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "audio" ? "text-foreground" : "text-muted-foreground"}`}>Audio</span>
+              <Switch checked={inputMode === "text"} onCheckedChange={(checked) => setInputMode(checked ? "text" : "audio")} />
+              <span className={`text-xs font-mono uppercase tracking-wider ${inputMode === "text" ? "text-foreground" : "text-muted-foreground"}`}>Text</span>
+            </div>
+          </div>
+
+          {/* User Input controls */}
+          <div className="bg-card/30 px-4 py-5 flex items-center justify-center gap-3">
+            {inputMode === "audio" ? (
+              <>
+                <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
+                {!started ? (
+                  <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
+                    Start Session
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      variant={talking ? "destructive" : "default"}
+                      className="gap-2"
+                      onClick={toggleTalking}
+                      disabled={muted}
+                    >
+                      {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      {talking ? "Stop" : "Talk"}
+                    </Button>
+                    <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
+                      {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
+                      <PhoneOff className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="flex w-full gap-2 items-end">
+                <Textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Type your message…"
+                  className="min-h-[48px] max-h-[80px] resize-none flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendTextMessage();
+                    }
+                  }}
+                />
+                <Button size="icon" onClick={sendTextMessage} disabled={!textInput.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Whiteboard */}
+          <div className="px-4 py-2 border-t border-b border-border bg-card/30">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Whiteboard</span>
           </div>
           <div className="flex-1 min-h-0">
             <Whiteboard canvasRef={canvasRef} className="h-full" />
-          </div>
-
-          {/* Audio controls */}
-          <div className="px-4 py-2 border-t border-b border-border bg-card/30">
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Audio / Text Input</span>
-          </div>
-          <div className="bg-card/30 px-4 py-4 flex items-center justify-center gap-3">
-            <span className="text-xs font-mono text-muted-foreground mr-2">{status}</span>
-
-            {!started ? (
-              <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={start}>
-                Start Session
-              </Button>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant={talking ? "destructive" : "default"}
-                  className="gap-2"
-                  onClick={toggleTalking}
-                  disabled={muted}
-                >
-                  {talking ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                  {talking ? "Stop" : "Talk"}
-                </Button>
-                <Button size="icon" variant={muted ? "destructive" : "outline"} className="h-8 w-8" onClick={toggleMute}>
-                  {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </Button>
-                <Button size="icon" variant="destructive" className="h-8 w-8" onClick={stop}>
-                  <PhoneOff className="h-4 w-4" />
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </div>

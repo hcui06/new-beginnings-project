@@ -34,24 +34,11 @@ const Workspace = () => {
     if (dc && dc.readyState === "open") dc.send(JSON.stringify(evt));
   }
 
-  function finalizeAndSendTurn(text: string) {
-    if (text) {
-      appendLog("YOU: " + text);
-      setUserTranscript(text);
-      setTimeout(() => setUserTranscript(""), 4000);
-    }
-
+  function showUserTranscript(text: string) {
     if (!text) return;
-
-    sendEvent({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text }],
-      },
-    });
-    sendEvent({ type: "response.create" });
+    appendLog("YOU: " + text);
+    setUserTranscript(text);
+    setTimeout(() => setUserTranscript(""), 4000);
   }
 
   async function start() {
@@ -97,10 +84,10 @@ const Workspace = () => {
             modalities: ["text", "audio"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.65,
-              prefix_padding_ms: 250,
-              silence_duration_ms: 1500,
-              create_response: false,
+              threshold: 0.3,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500,
+              create_response: true,
               interrupt_response: true,
             },
             voice: "ash",
@@ -118,7 +105,6 @@ const Workspace = () => {
 
         if (evt.type === "input_audio_buffer.speech_started") {
           turnTranscript = "";
-          appendLog("speech_started");
           return;
         }
 
@@ -128,17 +114,14 @@ const Workspace = () => {
         }
 
         if (evt.type === "conversation.item.input_audio_transcription.completed") {
-          turnTranscript = (evt.transcript as string) || turnTranscript || "";
+          const finalText = ((evt.transcript as string) || turnTranscript || "").trim();
+          showUserTranscript(finalText);
+          turnTranscript = "";
           return;
         }
 
         if (evt.type === "input_audio_buffer.speech_stopped") {
-          appendLog("speech_stopped");
-          setTimeout(() => {
-            const text = (turnTranscript || "").trim();
-            finalizeAndSendTurn(text);
-            turnTranscript = "";
-          }, 250);
+          // Don't finalize here — wait for transcription.completed
           return;
         }
 

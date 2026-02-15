@@ -15,7 +15,7 @@
     --popover: 30 40% 96.5%;
     --popover-foreground: 0 0% 5%;
 
-    --primary: 18 80% 44%;
+    --primary: 20 85% 48%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 30 35% 92%;
@@ -24,7 +24,7 @@
     --muted: 30 25% 93.5%;
     --muted-foreground: 0 0% 35%;
 
-    --accent: 18 75% 40%;
+    --accent: 20 80% 44%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -32,14 +32,14 @@
 
     --border: 30 25% 87%;
     --input: 30 25% 87%;
-    --ring: 18 80% 44%;
+    --ring: 20 85% 48%;
 
     --radius: 0.75rem;
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
-    --gradient-hero: linear-gradient(135deg, hsl(18 80% 44%), hsl(28 85% 48%), hsl(10 75% 42%));
+    --gradient-hero: linear-gradient(135deg, hsl(20 85% 48%), hsl(30 90% 52%), hsl(12 80% 46%));
     --gradient-subtle: linear-gradient(180deg, hsl(220 20% 97%), hsl(220 15% 94%));
 
     --sidebar-background: 0 0% 98%;

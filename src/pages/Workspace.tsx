@@ -87,7 +87,7 @@ const Workspace = () => {
               threshold: 0.6,
               prefix_padding_ms: 500,
               silence_duration_ms: 600,
-              create_response: true,
+              create_response: false,
               interrupt_response: true,
             },
             voice: "ash",
